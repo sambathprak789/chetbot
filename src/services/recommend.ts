@@ -71,6 +71,14 @@ async function analyze(
   throw new Error(`invalid answer: ${lastReason}`);
 }
 
+/** The voice note could not be understood — nothing is saved (Flow D). */
+export class UnclearVoiceError extends Error {
+  constructor(readonly language: Lang) {
+    super("voice not understood");
+    this.name = "UnclearVoiceError";
+  }
+}
+
 /** Analyze the feeling, pick 3 songs, save the request (keywords are never stored). */
 export async function recommend(
   env: Env,
@@ -79,6 +87,10 @@ export async function recommend(
   songLanguage: SongLanguage,
 ): Promise<Recommendation> {
   const a = await analyze(env, input, songLanguage);
+  if (a.unclear) {
+    if (input.kind === "voice") throw new UnclearVoiceError(a.language);
+    throw new Error("invalid answer: unclear on text");
+  }
 
   let songs = a.englishSongs;
   if (a.useKhmer) {

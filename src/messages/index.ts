@@ -122,6 +122,18 @@ export const errors = {
     km: `សារនេះវែងពេក។ សូមសរសេរឱ្យខ្លីជាង ${max} តួអក្សរ។`,
     en: `That message is too long. Please keep it under ${max} characters.`,
   }),
+  voiceTooLong: (maxSeconds: number): Record<Lang, string> => ({
+    km: `Voice នេះវែងពេក។ សូមផ្ញើ voice ដែលមិនលើស ${maxSeconds} វិនាទី ឬវាយអក្សរវិញ។`,
+    en: `That voice note is too long. Please send one under ${maxSeconds} seconds, or type instead.`,
+  }),
+  voiceTooBig: {
+    km: "ឯកសារ voice នេះធំពេក។ សូមថតខ្លីជាងនេះ ឬវាយអក្សរវិញ។",
+    en: "That voice file is too large. Please record a shorter one, or type instead.",
+  },
+  voiceUnclear: {
+    km: "សុំទោស ខ្ញុំស្តាប់មិនសូវច្បាស់ទេ។ សូមថតម្តងទៀតនៅកន្លែងស្ងាត់ ឬវាយអក្សរប្រាប់ខ្ញុំ 🙏",
+    en: "Sorry, I couldn't hear that clearly. Please record again somewhere quiet, or type instead 🙏",
+  },
   failed: {
     km: "សុំទោស ពេលនេះខ្ញុំមិនអាចស្វែងរកបទចម្រៀងបានទេ។ សូមព្យាយាមម្តងទៀតបន្តិចទៀត 🙏",
     en: "Sorry, I couldn't find songs right now. Please try again in a little while 🙏",

@@ -3,6 +3,7 @@ import { handleFeelingText } from "./handlers/feeling";
 import { handleHelp } from "./handlers/help";
 import { handleStart } from "./handlers/start";
 import { registerUser } from "./handlers/user";
+import { handleFeelingVoice } from "./handlers/voice";
 import type { BotContext } from "./types";
 
 let cached: { token: string; bot: Bot<BotContext> } | undefined;
@@ -27,6 +28,9 @@ export function getBot(env: Env): Bot<BotContext> {
     if (ctx.message.text.startsWith("/")) return next();
     await handleFeelingText(ctx);
   });
+
+  // Voice notes → feeling (Flow B, Milestone 4)
+  bot.chatType("private").on("message:voice", handleFeelingVoice);
 
   bot.catch((err) => {
     // Never log message text (Spec 7.4) — only the error and update id.

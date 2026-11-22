@@ -7,7 +7,7 @@ import { charLength, detectTextLang } from "../utils/lang";
 const MIN_CHARS = 3;
 const MAX_CHARS = 500;
 
-/** Flow B for typed text (Spec 2.3, 5.4). Voice comes in Milestone 4. */
+/** Flow B for typed text (Spec 2.3, 5.4). Voice: handlers/voice.ts. */
 export async function handleFeelingText(ctx: BotContext): Promise<void> {
   const text = ctx.message?.text?.trim() ?? "";
   const from = ctx.from;
