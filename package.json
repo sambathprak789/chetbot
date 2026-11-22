@@ -12,7 +12,10 @@
     "cf-typegen": "wrangler types --env-interface Env --env dev",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "songs:build": "node scripts/build-songs.mjs",
+    "db:seed:dev": "npm run songs:build && wrangler d1 execute chetbot-dev --env dev --remote --file seed/songs.sql",
+    "db:seed:prod": "npm run songs:build && wrangler d1 execute chetbot-prod --env production --remote --file seed/songs.sql"
   },
   "dependencies": {
     "grammy": "^1.46.0"
