@@ -4,6 +4,7 @@ import { GeminiError } from "../services/gemini";
 import { recommend, UnclearVoiceError } from "../services/recommend";
 import { downloadTelegramFile, toBase64 } from "../services/telegram-file";
 import type { BotContext } from "../types";
+import { resultKeyboard } from "./buttons";
 
 export const MAX_VOICE_BYTES = 1024 * 1024; // 1 MB (Spec 5.4)
 
@@ -41,10 +42,10 @@ export async function handleFeelingVoice(ctx: BotContext): Promise<void> {
 
   const status = await ctx.reply(listening[lang]);
   await ctx.replyWithChatAction("typing").catch(() => {});
-  const edit = (text: string, html = false) =>
+  const edit = (text: string, extra: object = {}) =>
     ctx.api.editMessageText(status.chat.id, status.message_id, text, {
-      ...(html ? { parse_mode: "HTML" as const } : {}),
       link_preview_options: { is_disabled: true },
+      ...extra,
     });
 
   try {
@@ -60,7 +61,10 @@ export async function handleFeelingVoice(ctx: BotContext): Promise<void> {
       { kind: "voice", mimeType: voice.mime_type ?? "audio/ogg", base64: toBase64(bytes) },
       "auto",
     );
-    await edit(songResult(rec), true);
+    await edit(songResult(rec), {
+      parse_mode: "HTML",
+      reply_markup: resultKeyboard(rec.requestId, 1, Number(ctx.env.MAX_REFRESH)),
+    });
   } catch (err) {
     if (err instanceof UnclearVoiceError) {
       await edit(errors.voiceUnclear[err.language]).catch(() => {});

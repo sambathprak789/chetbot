@@ -40,3 +40,47 @@ export async function addRecommendations(
   );
   await db.batch(songs.map((s) => stmt.bind(requestId, s.songId, s.title, s.artist, batch)));
 }
+
+export interface RequestRow {
+  id: number;
+  user_id: number;
+  mood: Mood;
+  language: Lang;
+}
+
+export interface RecRow {
+  song_id: number | null;
+  title: string;
+  artist: string;
+  batch: number;
+}
+
+export async function getRequest(db: D1Database, id: number): Promise<RequestRow | null> {
+  return db
+    .prepare("SELECT id, user_id, mood, language FROM requests WHERE id = ?1")
+    .bind(id)
+    .first<RequestRow>();
+}
+
+export async function listRecommendations(db: D1Database, requestId: number): Promise<RecRow[]> {
+  const { results } = await db
+    .prepare(
+      "SELECT song_id, title, artist, batch FROM recommendations WHERE request_id = ?1 ORDER BY batch, id",
+    )
+    .bind(requestId)
+    .all<RecRow>();
+  return results;
+}
+
+/** 👍/👎 applies to the whole batch of 3 songs (Spec 5.3). */
+export async function setBatchFeedback(
+  db: D1Database,
+  requestId: number,
+  batch: number,
+  feedback: "like" | "dislike",
+): Promise<void> {
+  await db
+    .prepare("UPDATE recommendations SET feedback = ?3 WHERE request_id = ?1 AND batch = ?2")
+    .bind(requestId, batch, feedback)
+    .run();
+}

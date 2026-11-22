@@ -94,6 +94,13 @@ const SONGS_HEADING: Record<Lang, string> = {
   en: "Songs for you",
 };
 
+function songLines(songs: { title: string; artist: string }[]): string[] {
+  return songs.map(
+    (s, i) =>
+      `${i + 1}. 🎵 <a href="${escapeHtml(youtubeSearchUrl(s.title, s.artist))}">${escapeHtml(s.title)}</a> — ${escapeHtml(s.artist)}`,
+  );
+}
+
 /** Comfort line + 3 songs as YouTube search links (Flow B step 5–6). */
 export function songResult(r: {
   mood: Mood;
@@ -101,17 +108,48 @@ export function songResult(r: {
   comfort: string;
   songs: { title: string; artist: string }[];
 }): string {
-  const list = r.songs.map(
-    (s, i) =>
-      `${i + 1}. 🎵 <a href="${escapeHtml(youtubeSearchUrl(s.title, s.artist))}">${escapeHtml(s.title)}</a> — ${escapeHtml(s.artist)}`,
-  );
   return [
     `${MOOD_EMOJI[r.mood]} ${escapeHtml(r.comfort)}`,
     ``,
     `<b>${SONGS_HEADING[r.language]}</b>`,
-    ...list,
+    ...songLines(r.songs),
   ].join("\n");
 }
+
+// ---------- Milestone 5: buttons ----------
+
+const MORE_HEADING: Record<Lang, string> = {
+  km: "បទផ្សេងទៀតសម្រាប់អ្នក",
+  en: "More songs for you",
+};
+
+/** A new batch after 🔄 or 👎 (Flow C). */
+export function moreSongsResult(lang: Lang, songs: { title: string; artist: string }[]): string {
+  return [`🔄 <b>${MORE_HEADING[lang]}</b>`, ...songLines(songs)].join("\n");
+}
+
+export const buttonTexts = {
+  thanks: { km: "អរគុណ! រីករាយស្តាប់ 🎧", en: "Thanks! Enjoy 🎧" },
+  askLanguage: {
+    km: "សុំទោសដែលបទមិនត្រូវចិត្ត 🙏 ចង់បានបទខ្មែរ ឬបទអង់គ្លេស?",
+    en: "Sorry those didn't fit 🙏 Would you like Khmer songs or English songs?",
+  },
+  khmer: { km: "🇰🇭 បទខ្មែរ", en: "🇰🇭 Khmer" },
+  english: { km: "🇬🇧 បទអង់គ្លេស", en: "🇬🇧 English" },
+  searching: { km: "🎧 កំពុងស្វែងរកបទថ្មី...", en: "🎧 Finding new songs..." },
+  limit: {
+    km: "លើកនេះអស់បទថ្មីហើយ។ សូមប្រាប់អារម្មណ៍ម្តងទៀត ដើម្បីទទួលបទថ្មី។",
+    en: "No more new songs for this one. Tell me how you feel again to get new songs.",
+  },
+  noSongs: {
+    km: "មិនមានបទខ្មែរថ្មីសម្រាប់អារម្មណ៍នេះទៀតទេ។ សាកជ្រើសបទអង់គ្លេសវិញ។",
+    en: "No new Khmer songs left for this mood. Try English songs instead.",
+  },
+  expired: {
+    km: "សារនេះចាស់ហើយ។ សូមប្រាប់អារម្មណ៍ម្តងទៀត។",
+    en: "This message is too old. Please tell me how you feel again.",
+  },
+} satisfies Record<string, Record<Lang, string>>;
 
 export const errors = {
   tooShort: {

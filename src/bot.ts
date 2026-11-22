@@ -1,4 +1,5 @@
 import { Bot } from "grammy";
+import { handleButton } from "./handlers/buttons";
 import { handleFeelingText } from "./handlers/feeling";
 import { handleHelp } from "./handlers/help";
 import { handleStart } from "./handlers/start";
@@ -31,6 +32,9 @@ export function getBot(env: Env): Bot<BotContext> {
 
   // Voice notes → feeling (Flow B, Milestone 4)
   bot.chatType("private").on("message:voice", handleFeelingVoice);
+
+  // 👍 👎 🔄 and the Khmer/English choice (Flow C, Milestone 5)
+  bot.on("callback_query:data", handleButton);
 
   bot.catch((err) => {
     // Never log message text (Spec 7.4) — only the error and update id.

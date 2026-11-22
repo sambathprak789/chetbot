@@ -2,6 +2,7 @@ import { errors, listening, songResult } from "../messages";
 import { GeminiError } from "../services/gemini";
 import { recommend } from "../services/recommend";
 import type { BotContext } from "../types";
+import { resultKeyboard } from "./buttons";
 import { charLength, detectTextLang } from "../utils/lang";
 
 const MIN_CHARS = 3;
@@ -33,6 +34,7 @@ export async function handleFeelingText(ctx: BotContext): Promise<void> {
     await ctx.api.editMessageText(status.chat.id, status.message_id, songResult(rec), {
       parse_mode: "HTML",
       link_preview_options: { is_disabled: true },
+      reply_markup: resultKeyboard(rec.requestId, 1, Number(ctx.env.MAX_REFRESH)),
     });
   } catch (err) {
     console.error("recommend failed", { error: String(err) }); // never log the user's text

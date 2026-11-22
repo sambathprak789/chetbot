@@ -181,6 +181,53 @@ export function pickKhmerSongs(
   return picked;
 }
 
+/** Up to 3 valid, distinct, Latin-script English songs that are not excluded. */
+export function parseEnglishSongs(raw: unknown, excludeKeys: Set<string>): PickedSong[] {
+  const list = Array.isArray(raw) ? raw : [];
+  const used = new Set<string>(excludeKeys);
+  const out: PickedSong[] = [];
+  for (const item of list) {
+    if (typeof item !== "object" || item === null) continue;
+    const { title, artist } = item as Record<string, unknown>;
+    if (typeof title !== "string" || typeof artist !== "string") continue;
+    const t = title.trim();
+    const a = artist.trim();
+    const k = songKey(t, a);
+    if (!t || !a || used.has(k)) continue;
+    if (!usesOnlyAllowedScripts(`${t} ${a}`, "en")) continue; // English songs only
+    used.add(k);
+    out.push({ songId: null, title: t, artist: a });
+    if (out.length === 3) break;
+  }
+  return out;
+}
+
+// ---------- 🔄 / 👎 → English: songs for a known mood (no user text needed) ----------
+
+export const ENGLISH_SONGS_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    english_songs: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: { title: { type: "STRING" }, artist: { type: "STRING" } },
+        required: ["title", "artist"],
+      },
+    },
+  },
+  required: ["english_songs"],
+} as const;
+
+export const ENGLISH_SONGS_PROMPT = `You recommend songs. Answer ONLY with JSON matching the schema.
+Give exactly 3 real, well-known English songs (exact title and main artist) that fit the MOOD.
+Never invent songs. Never pick a song listed in EXCLUDE. Choose 3 different songs.
+(missing = missing someone/nostalgic, stressed = stressed or tired, calm = calm or neutral)`;
+
+export function buildEnglishSongsText(mood: Mood, exclude: string[]): string {
+  return `MOOD: ${mood}\nEXCLUDE: ${exclude.length ? exclude.join(" | ") : "(none)"}`;
+}
+
 export type ValidationResult = { ok: true; value: Analysis } | { ok: false; reason: string };
 
 /** Used when the model keeps mixing in another script (Spec 5.4, revised). */
@@ -266,24 +313,9 @@ export function validateAnalysis(
   const keywords = cleanKeywords(r.keywords);
   const useKhmer = ctx.songLanguage === "auto" ? language === "km" : ctx.songLanguage === "km";
 
-  const englishSongs: PickedSong[] = [];
-  if (!useKhmer) {
-    const list = Array.isArray(r.english_songs) ? r.english_songs : [];
-    const used = new Set<string>(ctx.excludeKeys);
-    for (const item of list) {
-      if (typeof item !== "object" || item === null) continue;
-      const { title, artist } = item as Record<string, unknown>;
-      if (typeof title !== "string" || typeof artist !== "string") continue;
-      const t = title.trim();
-      const a = artist.trim();
-      const k = songKey(t, a);
-      if (!t || !a || used.has(k)) continue;
-      if (!usesOnlyAllowedScripts(`${t} ${a}`, "en")) continue; // English songs only
-      used.add(k);
-      englishSongs.push({ songId: null, title: t, artist: a });
-      if (englishSongs.length === 3) break;
-    }
-    if (englishSongs.length < 3) return { ok: false, reason: "fewer than 3 valid English songs" };
+  const englishSongs = useKhmer ? [] : parseEnglishSongs(r.english_songs, ctx.excludeKeys);
+  if (!useKhmer && englishSongs.length < 3) {
+    return { ok: false, reason: "fewer than 3 valid English songs" };
   }
 
   return {
