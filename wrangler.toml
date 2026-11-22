@@ -1,0 +1,45 @@
+# ChetBot (ចិត្តបទ) — Cloudflare Worker config
+# Run commands with --env dev or --env production.
+
+name = "chetbot"
+main = "src/index.ts"
+compatibility_date = "2026-11-19"
+
+[observability]
+enabled = true
+
+# ---------- dev (test bot) ----------
+[env.dev]
+name = "chetbot-dev"
+
+[env.dev.vars]
+GEMINI_MODEL = "gemini-2.5-flash" # confirmed in Milestone 3
+DAILY_USER_LIMIT = "10"
+DAILY_GLOBAL_LIMIT = "200" # set from your Gemini free-tier quota in AI Studio
+COOLDOWN_SECONDS = "10"
+MAX_VOICE_SECONDS = "60"
+MAX_REFRESH = "3"
+
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "chetbot-dev"
+database_id = "b1ea2363-a453-421a-9692-9fd525ca097a"
+migrations_dir = "migrations"
+
+# ---------- production (real bot) ----------
+[env.production]
+name = "chetbot"
+
+[env.production.vars]
+GEMINI_MODEL = "gemini-2.5-flash"
+DAILY_USER_LIMIT = "10"
+DAILY_GLOBAL_LIMIT = "200"
+COOLDOWN_SECONDS = "10"
+MAX_VOICE_SECONDS = "60"
+MAX_REFRESH = "3"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "chetbot-prod"
+database_id = "39d8f6fd-7bb2-4f44-8a92-51908520ad91"
+migrations_dir = "migrations"

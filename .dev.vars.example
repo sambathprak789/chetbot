@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local `npm run dev` (never commit .dev.vars)
+BOT_TOKEN=123456:your-test-bot-token
+GEMINI_API_KEY=your-gemini-key
+WEBHOOK_SECRET=letters_digits_dash_underscore_only
+OWNER_ID=123456789

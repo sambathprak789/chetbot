@@ -1,0 +1,27 @@
+{
+  "name": "chetbot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --env dev",
+    "deploy:dev": "wrangler deploy --env dev",
+    "deploy:prod": "wrangler deploy --env production",
+    "db:migrate:dev": "wrangler d1 migrations apply chetbot-dev --env dev --remote",
+    "db:migrate:prod": "wrangler d1 migrations apply chetbot-prod --env production --remote",
+    "cf-typegen": "wrangler types --env-interface Env --env dev",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "grammy": "^1.46.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.9.0",
+    "prettier": "^3.10.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12",
+    "wrangler": "^4.166.0"
+  }
+}
