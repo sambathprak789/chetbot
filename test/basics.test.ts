@@ -1,7 +1,7 @@
 import { env, exports } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
 import { upsertUser } from "../src/db/users";
-import { help, langFromTelegram, welcome } from "../src/messages";
+import { help, helpBilingual, langFromTelegram, welcome } from "../src/messages";
 import { escapeHtml } from "../src/utils/html";
 import { safeEqual } from "../src/utils/security";
 
@@ -75,6 +75,15 @@ describe("helpers", () => {
     const text = help("km", { maxVoiceSeconds: 60, dailyUserLimit: 10 });
     expect(text).toContain("60");
     expect(text).toContain("10");
+  });
+
+  it("/help shows Khmer first, then English", () => {
+    const text = helpBilingual({ maxVoiceSeconds: 60, dailyUserLimit: 10 });
+    const km = text.indexOf("របៀបប្រើ ChetBot");
+    const en = text.indexOf("How to use ChetBot");
+    expect(km).toBeGreaterThanOrEqual(0);
+    expect(en).toBeGreaterThan(km);
+    expect(text.length).toBeLessThan(4096); // Telegram message limit
   });
 
   it("safeEqual", () => {

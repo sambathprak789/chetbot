@@ -61,6 +61,11 @@ export function help(lang: Lang, l: HelpLimits): string {
   ].join("\n");
 }
 
+/** /help always shows Khmer first, then English (like /start). */
+export function helpBilingual(l: HelpLimits): string {
+  return [help("km", l), "", "———", "", help("en", l)].join("\n");
+}
+
 /** Menu commands shown by Telegram (registered by /setup). */
 export const commands: Record<Lang, { command: string; description: string }[]> = {
   en: [
