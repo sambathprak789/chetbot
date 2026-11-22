@@ -5,6 +5,7 @@ import { GeminiError } from "../services/gemini";
 import { RefreshError, refreshSongs } from "../services/refresh";
 import type { BotContext } from "../types";
 import { decodeAction, encodeAction } from "../utils/callback";
+import { takeSlotOrToast } from "./limits";
 
 /** 👍 👎 🔄 under every result (Spec 3.2: one row). 🔄 is hidden when no refresh is left. */
 export function resultKeyboard(
@@ -69,7 +70,9 @@ export async function handleButton(ctx: BotContext): Promise<void> {
     return;
   }
 
-  // 🔄 or language choice — new batch
+  // 🔄 or language choice — new batch; counts as one use (Spec 6.4)
+  const slot = await takeSlotOrToast(ctx, from.id, lang);
+  if (!slot) return;
   await ctx.answerCallbackQuery();
   let statusChatId: number;
   let statusMessageId: number;
@@ -99,6 +102,7 @@ export async function handleButton(ctx: BotContext): Promise<void> {
       reply_markup: resultKeyboard(request.id, r.batch, r.refreshesLeft),
     });
   } catch (err) {
+    await slot.refund(); // no new songs were given
     if (err instanceof RefreshError) {
       await edit(err.reason === "noSongs" ? buttonTexts.noSongs[lang] : buttonTexts.limit[lang]);
       return;

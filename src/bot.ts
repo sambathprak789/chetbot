@@ -5,6 +5,7 @@ import { handleHelp } from "./handlers/help";
 import { handleStart } from "./handlers/start";
 import { registerUser } from "./handlers/user";
 import { handleFeelingVoice } from "./handlers/voice";
+import { limitTexts } from "./messages";
 import type { BotContext } from "./types";
 
 let cached: { token: string; bot: Bot<BotContext> } | undefined;
@@ -35,6 +36,12 @@ export function getBot(env: Env): Bot<BotContext> {
 
   // 👍 👎 🔄 and the Khmer/English choice (Flow C, Milestone 5)
   bot.on("callback_query:data", handleButton);
+
+  // Anything else in a private chat: photos, stickers, files, unknown /commands (Spec 5.4, Milestone 6)
+  bot.chatType("private").on("message", async (ctx) => {
+    const isCommand = ctx.message.text?.startsWith("/");
+    await ctx.reply((isCommand ? limitTexts.unknownCommand : limitTexts.unsupported)[ctx.lang]);
+  });
 
   bot.catch((err) => {
     // Never log message text (Spec 7.4) — only the error and update id.

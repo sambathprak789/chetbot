@@ -181,3 +181,54 @@ export const errors = {
     en: "Lots of people are using the bot right now. Please try again a bit later 🙏",
   },
 } satisfies Record<string, Record<Lang, string> | ((n: number) => Record<Lang, string>)>;
+
+// ---------- Milestone 6: limits, other message types, safety ----------
+
+export const limitTexts = {
+  daily: (limit: number): Record<Lang, string> => ({
+    km: `ថ្ងៃនេះអ្នកបានប្រើគ្រប់ ${limit} ដងហើយ។ សូមត្រឡប់មកវិញថ្ងៃស្អែក 🌙`,
+    en: `You've used all ${limit} tries for today. Please come back tomorrow 🌙`,
+  }),
+  cooldown: (seconds: number): Record<Lang, string> => ({
+    km: `សូមរង់ចាំ ${seconds} វិនាទីទៀត សិនណា 🙏`,
+    en: `Please wait ${seconds} more seconds 🙏`,
+  }),
+  unsupported: {
+    km: "ខ្ញុំយល់តែ voice ឬអក្សរប៉ុណ្ណោះ។ សូមផ្ញើ voice ឬវាយអក្សរប្រាប់ពីអារម្មណ៍របស់អ្នក 🎤✍️",
+    en: "I can only understand voice notes or text. Please send a voice note or type how you feel 🎤✍️",
+  },
+  unknownCommand: {
+    km: "ខ្ញុំមិនស្គាល់ពាក្យបញ្ជានេះទេ។ សូមចុច /help ដើម្បីមើលរបៀបប្រើ។",
+    en: "I don't know that command. Tap /help to see how to use me.",
+  },
+} satisfies Record<string, Record<Lang, string> | ((n: number) => Record<Lang, string>)>;
+
+/**
+ * Shown instead of songs when the user may be at risk (Spec 6.3).
+ * Numbers checked 2026-11-22 (findahelpline.com, Wikipedia list of crisis lines):
+ * TPO Cambodia 017 222 372 · Child Helpline Cambodia 1280 (free, 24 h, up to age 25) · emergency 117 / 119.
+ */
+export const safetyMessage: Record<Lang, string> = {
+  km: [
+    "💙 សូមអរគុណដែលបានប្រាប់ខ្ញុំ។ ស្តាប់ទៅដូចជាអ្នកកំពុងឈឺចាប់ខ្លាំងណាស់ ហើយអ្នកមិនចាំបាច់ទ្រាំតែម្នាក់ឯងទេ។",
+    "",
+    "សូមនិយាយជាមួយមនុស្សដែលអ្នកទុកចិត្តនៅពេលនេះ ដូចជាគ្រួសារ ឬមិត្តភក្តិ។ អ្នកក៏អាចទូរស័ព្ទរកអ្នកប្រឹក្សាដែលរង់ចាំស្តាប់អ្នកដោយឥតគិតថ្លៃ៖",
+    "",
+    "📞 TPO Cambodia (ប្រឹក្សាផ្លូវចិត្ត)៖ <b>017 222 372</b>",
+    "📞 បណ្តាញទូរស័ព្ទជំនួយកុមារ (អាយុរហូតដល់ 25 ឆ្នាំ, 24 ម៉ោង)៖ <b>1280</b>",
+    "🚨 បើមានគ្រោះថ្នាក់ភ្លាមៗ៖ <b>117</b> ឬ <b>119</b>",
+    "",
+    "អ្នកសំខាន់ណាស់។ អ្នកអាចផ្ញើសារមកខ្ញុំម្តងទៀតពេលណាក៏បាន។",
+  ].join("\n"),
+  en: [
+    "💙 Thank you for telling me. It sounds like you're in a lot of pain, and you don't have to carry this alone.",
+    "",
+    "Please reach out to someone you trust right now, like family or a friend. You can also call free counsellors who are ready to listen:",
+    "",
+    "📞 TPO Cambodia (mental health support): <b>017 222 372</b>",
+    "📞 Child Helpline Cambodia (up to age 25, 24 hours): <b>1280</b>",
+    "🚨 In immediate danger: <b>117</b> or <b>119</b>",
+    "",
+    "You matter. You can message me again any time.",
+  ].join("\n"),
+};

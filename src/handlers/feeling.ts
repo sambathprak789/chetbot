@@ -1,8 +1,9 @@
-import { errors, listening, songResult } from "../messages";
+import { errors, listening, safetyMessage, songResult } from "../messages";
 import { GeminiError } from "../services/gemini";
-import { recommend } from "../services/recommend";
+import { recommend, SafetyConcernError } from "../services/recommend";
 import type { BotContext } from "../types";
 import { resultKeyboard } from "./buttons";
+import { takeSlotOrReply } from "./limits";
 import { charLength, detectTextLang } from "../utils/lang";
 
 const MIN_CHARS = 3;
@@ -25,6 +26,9 @@ export async function handleFeelingText(ctx: BotContext): Promise<void> {
     return;
   }
 
+  const slot = await takeSlotOrReply(ctx, from.id, lang);
+  if (!slot) return;
+
   const status = await ctx.reply(listening[lang]);
   await ctx.replyWithChatAction("typing").catch(() => {});
 
@@ -37,6 +41,16 @@ export async function handleFeelingText(ctx: BotContext): Promise<void> {
       reply_markup: resultKeyboard(rec.requestId, 1, Number(ctx.env.MAX_REFRESH)),
     });
   } catch (err) {
+    if (err instanceof SafetyConcernError) {
+      console.log("safety message shown", { input: "text" }); // no content
+      await ctx.api
+        .editMessageText(status.chat.id, status.message_id, safetyMessage[err.language], {
+          parse_mode: "HTML",
+        })
+        .catch(() => {});
+      return;
+    }
+    await slot.refund();
     console.error("recommend failed", { error: String(err) }); // never log the user's text
     const msg = err instanceof GeminiError && err.isQuota ? errors.busy[lang] : errors.failed[lang];
     await ctx.api.editMessageText(status.chat.id, status.message_id, msg).catch(() => {});

@@ -79,6 +79,14 @@ export class UnclearVoiceError extends Error {
   }
 }
 
+/** The user may be at risk — show the safety message instead of songs; nothing is saved (Spec 6.3). */
+export class SafetyConcernError extends Error {
+  constructor(readonly language: Lang) {
+    super("safety concern");
+    this.name = "SafetyConcernError";
+  }
+}
+
 /** Analyze the feeling, pick 3 songs, save the request (keywords are never stored). */
 export async function recommend(
   env: Env,
@@ -87,6 +95,7 @@ export async function recommend(
   songLanguage: SongLanguage,
 ): Promise<Recommendation> {
   const a = await analyze(env, input, songLanguage);
+  if (a.selfHarm) throw new SafetyConcernError(a.language);
   if (a.unclear) {
     if (input.kind === "voice") throw new UnclearVoiceError(a.language);
     throw new Error("invalid answer: unclear on text");

@@ -21,12 +21,15 @@ export interface Analysis {
   englishSongs: PickedSong[];
   /** Voice only: the model could not understand the audio (Flow D). */
   unclear: boolean;
+  /** The user talks about suicide or hurting themselves → safety message, no songs (Spec 6.3). */
+  selfHarm: boolean;
 }
 
 export const ANALYSIS_SCHEMA = {
   type: "OBJECT",
   properties: {
     unclear: { type: "BOOLEAN" },
+    self_harm_risk: { type: "BOOLEAN" },
     mood: { type: "STRING", enum: MOODS },
     language: { type: "STRING", enum: ["km", "en"] },
     comfort: { type: "STRING" },
@@ -40,7 +43,15 @@ export const ANALYSIS_SCHEMA = {
       },
     },
   },
-  required: ["unclear", "mood", "language", "comfort", "keywords", "english_songs"],
+  required: [
+    "unclear",
+    "self_harm_risk",
+    "mood",
+    "language",
+    "comfort",
+    "keywords",
+    "english_songs",
+  ],
 } as const;
 
 export const SYSTEM_PROMPT = `You are ChetBot (ចិត្តបទ), a warm music companion for young Cambodians.
@@ -51,6 +62,9 @@ Do all of this and answer ONLY with JSON that matches the schema:
 0. unclear: true ONLY for a voice note you cannot understand (silence, only noise or music,
    too quiet, or a language other than Khmer or English). Then the other fields can be empty
    ("calm", "km", "", [], []). For typed text, unclear is always false.
+0b. self_harm_risk: true if the user says or hints that they want to die, end their life,
+   disappear forever, or hurt themselves (in any language, even indirectly). Feeling sad,
+   tired or hopeless WITHOUT any of that is false. When unsure, choose true.
 1. mood: the user's main feeling, exactly one of: ${MOODS.join(", ")}.
    (missing = missing someone/nostalgic, stressed = stressed or tired, calm = calm or neutral)
 2. language: the language the user mainly used, "km" (Khmer) or "en" (English).
@@ -280,18 +294,19 @@ export function validateAnalysis(
   if (typeof raw !== "object" || raw === null) return { ok: false, reason: "not an object" };
   const r = raw as Record<string, unknown>;
 
-  if (r.unclear === true) {
+  if (r.self_harm_risk === true || r.unclear === true) {
     const language: Lang = r.language === "en" ? "en" : "km";
     return {
       ok: true,
       value: {
-        mood: "calm",
+        mood: isMood(r.mood) ? r.mood : "sad",
         language,
         comfort: "",
         keywords: [],
         useKhmer: true,
         englishSongs: [],
-        unclear: true,
+        unclear: r.self_harm_risk !== true && r.unclear === true,
+        selfHarm: r.self_harm_risk === true,
       },
     };
   }
@@ -320,6 +335,15 @@ export function validateAnalysis(
 
   return {
     ok: true,
-    value: { mood, language, comfort, keywords, useKhmer, englishSongs, unclear: false },
+    value: {
+      mood,
+      language,
+      comfort,
+      keywords,
+      useKhmer,
+      englishSongs,
+      unclear: false,
+      selfHarm: false,
+    },
   };
 }

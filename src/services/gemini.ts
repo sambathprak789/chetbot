@@ -1,5 +1,8 @@
 /** Minimal Gemini REST client (generateContent with JSON output). */
 
+import { takeGlobalSlot } from "../db/usage";
+import { pacificDate } from "../utils/time";
+
 export type GeminiPart = { text: string } | { inlineData: { mimeType: string; data: string } };
 
 export interface GeminiUsage {
@@ -23,9 +26,13 @@ export class GeminiError extends Error {
 }
 
 export async function generateJson(
-  env: Pick<Env, "GEMINI_API_KEY" | "GEMINI_MODEL">,
+  env: Pick<Env, "GEMINI_API_KEY" | "GEMINI_MODEL" | "DB" | "DAILY_GLOBAL_LIMIT">,
   opts: { system: string; parts: GeminiPart[]; schema: object; temperature?: number },
 ): Promise<{ json: unknown; usage: GeminiUsage }> {
+  // Every call (retries too) counts against the shared daily budget (Spec 6.4)
+  if (!(await takeGlobalSlot(env.DB, pacificDate(Date.now()), Number(env.DAILY_GLOBAL_LIMIT)))) {
+    throw new GeminiError(429, "DAILY_GLOBAL_LIMIT reached");
+  }
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_MODEL}:generateContent`;
   const res = await fetch(url, {
     method: "POST",

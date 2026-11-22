@@ -1,10 +1,11 @@
 import type { Voice } from "grammy/types";
-import { errors, listening, songResult } from "../messages";
+import { errors, listening, safetyMessage, songResult } from "../messages";
 import { GeminiError } from "../services/gemini";
-import { recommend, UnclearVoiceError } from "../services/recommend";
+import { recommend, SafetyConcernError, UnclearVoiceError } from "../services/recommend";
 import { downloadTelegramFile, toBase64 } from "../services/telegram-file";
 import type { BotContext } from "../types";
 import { resultKeyboard } from "./buttons";
+import { takeSlotOrReply } from "./limits";
 
 export const MAX_VOICE_BYTES = 1024 * 1024; // 1 MB (Spec 5.4)
 
@@ -40,6 +41,9 @@ export async function handleFeelingVoice(ctx: BotContext): Promise<void> {
     return;
   }
 
+  const slot = await takeSlotOrReply(ctx, from.id, lang);
+  if (!slot) return;
+
   const status = await ctx.reply(listening[lang]);
   await ctx.replyWithChatAction("typing").catch(() => {});
   const edit = (text: string, extra: object = {}) =>
@@ -66,10 +70,17 @@ export async function handleFeelingVoice(ctx: BotContext): Promise<void> {
       reply_markup: resultKeyboard(rec.requestId, 1, Number(ctx.env.MAX_REFRESH)),
     });
   } catch (err) {
+    if (err instanceof SafetyConcernError) {
+      console.log("safety message shown", { input: "voice" }); // no content
+      await edit(safetyMessage[err.language], { parse_mode: "HTML" }).catch(() => {});
+      return;
+    }
     if (err instanceof UnclearVoiceError) {
+      // Gemini was used, so the try counts (stops endless silent/noise uploads)
       await edit(errors.voiceUnclear[err.language]).catch(() => {});
       return;
     }
+    await slot.refund();
     console.error("voice recommend failed", { error: String(err) }); // no audio, no token
     const msg = err instanceof GeminiError && err.isQuota ? errors.busy[lang] : errors.failed[lang];
     await edit(msg).catch(() => {});
