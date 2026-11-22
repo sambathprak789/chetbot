@@ -2,6 +2,9 @@ import { Bot } from "grammy";
 import { handleButton } from "./handlers/buttons";
 import { handleFeelingText } from "./handlers/feeling";
 import { handleHelp } from "./handlers/help";
+import { handleDeleteMyData } from "./handlers/privacy";
+import { handleStats } from "./handlers/stats";
+import { alertOwner } from "./services/alerts";
 import { handleStart } from "./handlers/start";
 import { registerUser } from "./handlers/user";
 import { handleFeelingVoice } from "./handlers/voice";
@@ -24,6 +27,8 @@ export function getBot(env: Env): Bot<BotContext> {
 
   bot.command("start", handleStart);
   bot.command("help", handleHelp);
+  bot.command("deletemydata", handleDeleteMyData);
+  bot.command("stats", handleStats); // owner only; others fall through to "unknown command"
 
   // Any other private text that is not a command → feeling (Flow B)
   bot.chatType("private").on("message:text", async (ctx, next) => {
@@ -46,6 +51,7 @@ export function getBot(env: Env): Bot<BotContext> {
   bot.catch((err) => {
     // Never log message text (Spec 7.4) — only the error and update id.
     console.error("bot error", { update_id: err.ctx.update.update_id, error: String(err.error) });
+    return alertOwner(env, "bot handler", err.error);
   });
 
   cached = { token: env.BOT_TOKEN, bot };

@@ -4,6 +4,7 @@ import { recommend, SafetyConcernError } from "../services/recommend";
 import type { BotContext } from "../types";
 import { resultKeyboard } from "./buttons";
 import { takeSlotOrReply } from "./limits";
+import { alertOwner } from "../services/alerts";
 import { charLength, detectTextLang } from "../utils/lang";
 
 const MIN_CHARS = 3;
@@ -52,6 +53,7 @@ export async function handleFeelingText(ctx: BotContext): Promise<void> {
     }
     await slot.refund();
     console.error("recommend failed", { error: String(err) }); // never log the user's text
+    await alertOwner(ctx.env, "text → songs", err);
     const msg = err instanceof GeminiError && err.isQuota ? errors.busy[lang] : errors.failed[lang];
     await ctx.api.editMessageText(status.chat.id, status.message_id, msg).catch(() => {});
   }

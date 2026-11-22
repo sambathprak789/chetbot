@@ -1,5 +1,5 @@
 import { Api } from "grammy";
-import { commands } from "../messages";
+import { commands, ownerCommands } from "../messages";
 import { safeEqual, WEBHOOK_SECRET_PATTERN } from "../utils/security";
 
 /**
@@ -31,11 +31,22 @@ export async function handleSetup(request: Request, env: Env): Promise<Response>
   await api.setMyCommands(commands.km, { language_code: "km" });
   await api.setChatMenuButton({ menu_button: { type: "commands" } });
 
+  // The owner also sees /stats. Fails if the owner has never opened the bot — open it, then run /setup again.
+  let ownerMenu = "ok";
+  try {
+    const scope = { type: "chat" as const, chat_id: Number(env.OWNER_ID) };
+    await api.setMyCommands(ownerCommands.en, { scope });
+    await api.setMyCommands(ownerCommands.km, { scope, language_code: "km" });
+  } catch (e) {
+    ownerMenu = `failed: ${String(e).slice(0, 120)} — send /start to the bot from the owner account, then open /setup again`;
+  }
+
   const info = await api.getWebhookInfo();
   return Response.json({
     ok: true,
     webhook: info.url,
     pending_updates: info.pending_update_count,
     last_error: info.last_error_message ?? null,
+    owner_menu: ownerMenu,
   });
 }

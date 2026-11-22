@@ -153,7 +153,9 @@ describe("safety (Spec 6.3)", () => {
 
   it("the safety message has the helplines and uses one script per language", () => {
     for (const lang of ["km", "en"] as const) {
-      expect(safetyMessage[lang]).toContain("017 222 372");
+      for (const n of ["023 63 66 991", "016 222 597", "095 777 004", "119"])
+        expect(safetyMessage[lang]).toContain(n);
+      expect(safetyMessage[lang]).not.toContain("017 222 372");
       expect(safetyMessage[lang]).toContain("1280");
       expect(usesOnlyAllowedScripts(safetyMessage[lang].replace(/<\/?b>/g, ""), lang)).toBe(true);
     }

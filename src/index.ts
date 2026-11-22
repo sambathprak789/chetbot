@@ -1,6 +1,7 @@
 import type { Update } from "grammy/types";
 import { getBot } from "./bot";
 import { handleSetup } from "./handlers/setup";
+import { alertOwner } from "./services/alerts";
 import { safeEqual } from "./utils/security";
 
 export default {
@@ -26,7 +27,10 @@ export default {
         (async () => {
           if (!bot.isInited()) await bot.init();
           await bot.handleUpdate(update);
-        })().catch((err) => console.error("update failed", { error: String(err) })),
+        })().catch(async (err) => {
+          console.error("update failed", { error: String(err) });
+          await alertOwner(env, "webhook update", err);
+        }),
       );
       return new Response("OK");
     }

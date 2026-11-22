@@ -42,6 +42,7 @@ export function help(lang: Lang, l: HelpLimits): string {
       `<b>Privacy</b>`,
       `• I don't store your voice or your text — only the mood type and language.`,
       `• Your voice or text is sent to Google Gemini for analysis. On the free tier, Google may use this data to improve its services. Please don't send personal details such as phone numbers or addresses.`,
+      `• Tap /deletemydata any time to delete everything I keep about you.`,
     ].join("\n");
   }
   return [
@@ -56,6 +57,7 @@ export function help(lang: Lang, l: HelpLimits): string {
     `<b>ឯកជនភាព</b>`,
     `• ខ្ញុំមិនរក្សាទុកសំឡេង ឬអក្សរដែលអ្នកផ្ញើទេ — រក្សាតែប្រភេទអារម្មណ៍ និងភាសាប៉ុណ្ណោះ។`,
     `• សំឡេង ឬអក្សររបស់អ្នកត្រូវបានផ្ញើទៅ Google Gemini ដើម្បីវិភាគ។ ក្នុងកម្រិតឥតគិតថ្លៃ Google អាចប្រើទិន្នន័យនេះដើម្បីកែលម្អសេវារបស់ខ្លួន។ សូមកុំផ្ញើព័ត៌មានផ្ទាល់ខ្លួន ដូចជាលេខទូរស័ព្ទ ឬអាសយដ្ឋាន។`,
+    `• ចុច /deletemydata ពេលណាក៏បាន ដើម្បីលុបទិន្នន័យទាំងអស់ដែលខ្ញុំរក្សាអំពីអ្នក។`,
   ].join("\n");
 }
 
@@ -64,11 +66,19 @@ export const commands: Record<Lang, { command: string; description: string }[]> 
   en: [
     { command: "start", description: "Start ChetBot" },
     { command: "help", description: "How to use and privacy" },
+    { command: "deletemydata", description: "Delete my data" },
   ],
   km: [
     { command: "start", description: "ចាប់ផ្តើម ChetBot" },
     { command: "help", description: "របៀបប្រើ និងឯកជនភាព" },
+    { command: "deletemydata", description: "លុបទិន្នន័យរបស់ខ្ញុំ" },
   ],
+};
+
+/** Extra command only the owner sees in the menu (Spec 3.2). */
+export const ownerCommands: Record<Lang, { command: string; description: string }[]> = {
+  en: [...commands.en, { command: "stats", description: "Usage stats (owner)" }],
+  km: [...commands.km, { command: "stats", description: "ស្ថិតិការប្រើប្រាស់ (ម្ចាស់)" }],
 };
 
 // ---------- Milestone 3: feeling → songs ----------
@@ -205,30 +215,50 @@ export const limitTexts = {
 
 /**
  * Shown instead of songs when the user may be at risk (Spec 6.3).
- * Numbers checked 2026-11-22 (findahelpline.com, Wikipedia list of crisis lines):
- * TPO Cambodia 017 222 372 · Child Helpline Cambodia 1280 (free, 24 h, up to age 25) · emergency 117 / 119.
+ * TPO numbers and hours from TPO's own site (checked 2026-11-22):
+ *   tpocambodia.org/getting-help/ → 023 63 66 991, Mon–Fri 8–12 & 1–4
+ *   tpocambodia.org/contact-us/   → Treatment Center 016 222 597 & 095 777 004, Mon–Sun 8–12 & 1–4
+ * Child Helpline Cambodia 1280: free, 24 h, up to age 25. Emergency: 119 ambulance, 117 police.
  */
 export const safetyMessage: Record<Lang, string> = {
   km: [
     "💙 សូមអរគុណដែលបានប្រាប់ខ្ញុំ។ ស្តាប់ទៅដូចជាអ្នកកំពុងឈឺចាប់ខ្លាំងណាស់ ហើយអ្នកមិនចាំបាច់ទ្រាំតែម្នាក់ឯងទេ។",
     "",
-    "សូមនិយាយជាមួយមនុស្សដែលអ្នកទុកចិត្តនៅពេលនេះ ដូចជាគ្រួសារ ឬមិត្តភក្តិ។ អ្នកក៏អាចទូរស័ព្ទរកអ្នកប្រឹក្សាដែលរង់ចាំស្តាប់អ្នកដោយឥតគិតថ្លៃ៖",
+    "សូមនិយាយជាមួយមនុស្សដែលអ្នកទុកចិត្តនៅពេលនេះ ដូចជាគ្រួសារ ឬមិត្តភក្តិ។ អ្នកក៏អាចទូរស័ព្ទរកអ្នកប្រឹក្សាដែលអាចជួយអ្នកបាន៖",
     "",
-    "📞 TPO Cambodia (ប្រឹក្សាផ្លូវចិត្ត)៖ <b>017 222 372</b>",
-    "📞 បណ្តាញទូរស័ព្ទជំនួយកុមារ (អាយុរហូតដល់ 25 ឆ្នាំ, 24 ម៉ោង)៖ <b>1280</b>",
-    "🚨 បើមានគ្រោះថ្នាក់ភ្លាមៗ៖ <b>117</b> ឬ <b>119</b>",
+    "📞 បណ្តាញទូរស័ព្ទជំនួយកុមារ (អាយុរហូតដល់ 25 ឆ្នាំ, 24 ម៉ោង, ឥតគិតថ្លៃ)៖ <b>1280</b>",
+    "📞 TPO Cambodia (សុខភាពផ្លូវចិត្ត)៖ <b>023 63 66 991</b> (ច័ន្ទ–សុក្រ, 8–12 ព្រឹក និង 1–4 រសៀល)",
+    "🏥 មណ្ឌលព្យាបាល TPO៖ <b>016 222 597</b> ឬ <b>095 777 004</b> (រៀងរាល់ថ្ងៃ, 8–12 ព្រឹក និង 1–4 រសៀល)",
+    "🚨 បើមានគ្រោះថ្នាក់ភ្លាមៗ៖ <b>119</b> (រថយន្តសង្គ្រោះ) ឬ <b>117</b> (ប៉ូលិស)",
     "",
     "អ្នកសំខាន់ណាស់។ អ្នកអាចផ្ញើសារមកខ្ញុំម្តងទៀតពេលណាក៏បាន។",
   ].join("\n"),
   en: [
     "💙 Thank you for telling me. It sounds like you're in a lot of pain, and you don't have to carry this alone.",
     "",
-    "Please reach out to someone you trust right now, like family or a friend. You can also call free counsellors who are ready to listen:",
+    "Please reach out to someone you trust right now, like family or a friend. You can also call people who can help:",
     "",
-    "📞 TPO Cambodia (mental health support): <b>017 222 372</b>",
-    "📞 Child Helpline Cambodia (up to age 25, 24 hours): <b>1280</b>",
-    "🚨 In immediate danger: <b>117</b> or <b>119</b>",
+    "📞 Child Helpline Cambodia (up to age 25, 24 hours, free): <b>1280</b>",
+    "📞 TPO Cambodia (mental health): <b>023 63 66 991</b> (Mon–Fri, 8am–12pm and 1–4pm)",
+    "🏥 TPO Treatment Center: <b>016 222 597</b> or <b>095 777 004</b> (every day, 8am–12pm and 1–4pm)",
+    "🚨 In immediate danger: <b>119</b> (ambulance) or <b>117</b> (police)",
     "",
     "You matter. You can message me again any time.",
   ].join("\n"),
 };
+
+// ---------- Milestone 7: /deletemydata ----------
+
+export const deleteTexts = {
+  confirm: {
+    km: "តើអ្នកចង់លុបទិន្នន័យទាំងអស់ដែលខ្ញុំរក្សាអំពីអ្នកមែនទេ? (ឈ្មោះ ភាសា ប្រវត្តិអារម្មណ៍ បទដែលបានណែនាំ និងការចុច 👍/👎)\n\n⚠️ ការលុបនេះមិនអាចយកមកវិញបានទេ។",
+    en: "Do you want to delete everything I keep about you? (name, language, mood history, recommended songs and 👍/👎)\n\n⚠️ This cannot be undone.",
+  },
+  yes: { km: "🗑 លុប", en: "🗑 Delete" },
+  no: { km: "បោះបង់", en: "Cancel" },
+  done: {
+    km: "✅ ទិន្នន័យរបស់អ្នកត្រូវបានលុបហើយ។ ប្រសិនបើអ្នកផ្ញើសារមកម្តងទៀត ខ្ញុំនឹងចាប់ផ្តើមពីដំបូង។",
+    en: "✅ Your data has been deleted. If you message me again, I'll start fresh.",
+  },
+  cancelled: { km: "បានបោះបង់។ មិនមានអ្វីត្រូវបានលុបទេ។", en: "Cancelled. Nothing was deleted." },
+} satisfies Record<string, Record<Lang, string>>;

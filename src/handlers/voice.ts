@@ -6,6 +6,7 @@ import { downloadTelegramFile, toBase64 } from "../services/telegram-file";
 import type { BotContext } from "../types";
 import { resultKeyboard } from "./buttons";
 import { takeSlotOrReply } from "./limits";
+import { alertOwner } from "../services/alerts";
 
 export const MAX_VOICE_BYTES = 1024 * 1024; // 1 MB (Spec 5.4)
 
@@ -82,6 +83,7 @@ export async function handleFeelingVoice(ctx: BotContext): Promise<void> {
     }
     await slot.refund();
     console.error("voice recommend failed", { error: String(err) }); // no audio, no token
+    await alertOwner(ctx.env, "voice → songs", err);
     const msg = err instanceof GeminiError && err.isQuota ? errors.busy[lang] : errors.failed[lang];
     await edit(msg).catch(() => {});
   }

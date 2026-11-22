@@ -4,7 +4,8 @@ import type { Lang } from "../messages";
 export type Action =
   | { type: "like" | "dislike"; requestId: number; batch: number }
   | { type: "more"; requestId: number }
-  | { type: "lang"; language: Lang; requestId: number };
+  | { type: "lang"; language: Lang; requestId: number }
+  | { type: "delete"; confirm: boolean };
 
 export function encodeAction(a: Action): string {
   switch (a.type) {
@@ -15,6 +16,8 @@ export function encodeAction(a: Action): string {
       return `more:${a.requestId}`;
     case "lang":
       return `lang:${a.language}:${a.requestId}`;
+    case "delete":
+      return `del:${a.confirm ? "yes" : "no"}`;
   }
 }
 
@@ -35,6 +38,9 @@ export function decodeAction(data: string | undefined): Action | null {
   if (type === "lang" && (a === "km" || a === "en")) {
     const requestId = int(b);
     return requestId ? { type, language: a, requestId } : null;
+  }
+  if (type === "del" && (a === "yes" || a === "no") && b === undefined) {
+    return { type: "delete", confirm: a === "yes" };
   }
   return null;
 }

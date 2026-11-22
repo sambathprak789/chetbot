@@ -6,6 +6,8 @@ import { RefreshError, refreshSongs } from "../services/refresh";
 import type { BotContext } from "../types";
 import { decodeAction, encodeAction } from "../utils/callback";
 import { takeSlotOrToast } from "./limits";
+import { handleDeleteChoice } from "./privacy";
+import { alertOwner } from "../services/alerts";
 
 /** 👍 👎 🔄 under every result (Spec 3.2: one row). 🔄 is hidden when no refresh is left. */
 export function resultKeyboard(
@@ -35,6 +37,11 @@ export async function handleButton(ctx: BotContext): Promise<void> {
   const action = decodeAction(ctx.callbackQuery?.data);
   if (!from || !msg || !action) {
     await ctx.answerCallbackQuery();
+    return;
+  }
+
+  if (action.type === "delete") {
+    await handleDeleteChoice(ctx, action.confirm);
     return;
   }
 
@@ -108,6 +115,7 @@ export async function handleButton(ctx: BotContext): Promise<void> {
       return;
     }
     console.error("refresh failed", { error: String(err) });
+    await alertOwner(ctx.env, "refresh (🔄 / 👎)", err);
     await edit(err instanceof GeminiError && err.isQuota ? errors.busy[lang] : errors.failed[lang]);
   }
 }
