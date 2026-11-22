@@ -18,3 +18,8 @@ export async function upsertUser(
     .first<{ language: Lang }>();
   return row?.language ?? user.defaultLang;
 }
+
+/** Remember the language the user last spoke (Spec 5.2 users.language). */
+export async function setUserLanguage(db: D1Database, id: number, language: Lang): Promise<void> {
+  await db.prepare("UPDATE users SET language = ?2 WHERE id = ?1").bind(id, language).run();
+}

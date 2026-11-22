@@ -1,4 +1,5 @@
 import { Bot } from "grammy";
+import { handleFeelingText } from "./handlers/feeling";
 import { handleHelp } from "./handlers/help";
 import { handleStart } from "./handlers/start";
 import { registerUser } from "./handlers/user";
@@ -20,6 +21,12 @@ export function getBot(env: Env): Bot<BotContext> {
 
   bot.command("start", handleStart);
   bot.command("help", handleHelp);
+
+  // Any other private text that is not a command → feeling (Flow B)
+  bot.chatType("private").on("message:text", async (ctx, next) => {
+    if (ctx.message.text.startsWith("/")) return next();
+    await handleFeelingText(ctx);
+  });
 
   bot.catch((err) => {
     // Never log message text (Spec 7.4) — only the error and update id.

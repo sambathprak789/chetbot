@@ -13,7 +13,7 @@ enabled = true
 name = "chetbot-dev"
 
 [env.dev.vars]
-GEMINI_MODEL = "gemini-2.5-flash" # confirmed in Milestone 3
+GEMINI_MODEL = "gemini-3.1-flash-lite"
 DAILY_USER_LIMIT = "10"
 DAILY_GLOBAL_LIMIT = "200" # set from your Gemini free-tier quota in AI Studio
 COOLDOWN_SECONDS = "10"

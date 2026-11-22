@@ -1,4 +1,6 @@
+import type { Mood } from "../moods";
 import { escapeHtml } from "../utils/html";
+import { youtubeSearchUrl } from "../utils/youtube";
 
 export type Lang = "km" | "en";
 
@@ -68,3 +70,64 @@ export const commands: Record<Lang, { command: string; description: string }[]> 
     { command: "help", description: "របៀបប្រើ និងឯកជនភាព" },
   ],
 };
+
+// ---------- Milestone 3: feeling → songs ----------
+
+export const listening: Record<Lang, string> = {
+  km: "🎧 កំពុងស្តាប់...",
+  en: "🎧 Listening...",
+};
+
+const MOOD_EMOJI: Record<Mood, string> = {
+  sad: "💙",
+  happy: "🌞",
+  angry: "🌿",
+  missing: "🌙",
+  love: "💕",
+  lonely: "🤍",
+  stressed: "🍃",
+  calm: "☁️",
+};
+
+const SONGS_HEADING: Record<Lang, string> = {
+  km: "បទចម្រៀងសម្រាប់អ្នក",
+  en: "Songs for you",
+};
+
+/** Comfort line + 3 songs as YouTube search links (Flow B step 5–6). */
+export function songResult(r: {
+  mood: Mood;
+  language: Lang;
+  comfort: string;
+  songs: { title: string; artist: string }[];
+}): string {
+  const list = r.songs.map(
+    (s, i) =>
+      `${i + 1}. 🎵 <a href="${escapeHtml(youtubeSearchUrl(s.title, s.artist))}">${escapeHtml(s.title)}</a> — ${escapeHtml(s.artist)}`,
+  );
+  return [
+    `${MOOD_EMOJI[r.mood]} ${escapeHtml(r.comfort)}`,
+    ``,
+    `<b>${SONGS_HEADING[r.language]}</b>`,
+    ...list,
+  ].join("\n");
+}
+
+export const errors = {
+  tooShort: {
+    km: "សូមសរសេរប្រាប់ពីអារម្មណ៍របស់អ្នកឱ្យវែងជាងនេះបន្តិច 🙂",
+    en: "Please tell me a little more about how you feel 🙂",
+  },
+  tooLong: (max: number): Record<Lang, string> => ({
+    km: `សារនេះវែងពេក។ សូមសរសេរឱ្យខ្លីជាង ${max} តួអក្សរ។`,
+    en: `That message is too long. Please keep it under ${max} characters.`,
+  }),
+  failed: {
+    km: "សុំទោស ពេលនេះខ្ញុំមិនអាចស្វែងរកបទចម្រៀងបានទេ។ សូមព្យាយាមម្តងទៀតបន្តិចទៀត 🙏",
+    en: "Sorry, I couldn't find songs right now. Please try again in a little while 🙏",
+  },
+  busy: {
+    km: "ពេលនេះមានអ្នកប្រើច្រើនពេក។ សូមព្យាយាមម្តងទៀតក្រោយពីនេះបន្តិច 🙏",
+    en: "Lots of people are using the bot right now. Please try again a bit later 🙏",
+  },
+} satisfies Record<string, Record<Lang, string> | ((n: number) => Record<Lang, string>)>;
